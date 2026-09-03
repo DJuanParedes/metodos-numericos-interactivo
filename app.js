@@ -163,6 +163,7 @@ function formulaBlock(label, formula, description) { return `<span class="formul
 function emptyState(text, iconName = "chart") { return `<div class="empty-state-content"><span class="empty-icon">${icon(iconName)}</span><span>${text}</span></div>`; }
 function safe(value) { return String(value ?? "").replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;"); }
 function procedureStep(number, title, formula, description) { return `<article class="procedure-step"><span>${number}</span><div><h3>${safe(title)}</h3>${formula ? `<code>${safe(formula)}</code>` : ""}<p>${safe(description)}</p></div></article>`; }
+function checkCard(status, label, value, note) { return `<article class="check-card ${status}"><span>${icon(status === "pass" ? "check" : status === "warn" ? "warning" : "search")}</span><div><small>${safe(label)}</small><strong>${safe(value)}</strong>${note ? `<p>${safe(note)}</p>` : ""}</div></article>`; }
 function codePanelMarkup(step = "5") { return `<div class="panel-heading code-heading"><span class="step-number">${stepBadge(step, "code")}</span><div><h2>Código reproducible</h2><p>Usa exactamente los datos que ingresaste.</p></div><div class="code-actions"><button type="button" class="language-button active" data-code-language="python">Python</button><button type="button" class="language-button" data-code-language="matlab">MATLAB</button><button type="button" class="secondary-button" data-download-code>${actionLabel("download", "Descargar")}</button></div></div><pre><code data-code-output></code></pre>`; }
 
 function setupCodePanel(panel, codes, name, step = "5") {
@@ -316,7 +317,60 @@ function renderNumericalProcedure(methodId, result, input, config) {
     + procedureStep("3", "Primera sustitución", substitution, detail)
     + procedureStep("4", "Criterio de parada", `${criterionLabel(result.criterion)} = ${stopValue}`, `${result.converged ? "El criterio se cumplió" : "Se agotó el máximo de iteraciones"} después de ${result.rows.length} iteraciones.`)
     + procedureStep("5", "Conclusión", `x ≈ ${format(result.root, 10)} ; |f(x)| ≈ ${format(result.residual, 7)}`, interpretResult(result));
+  app.querySelector("#theory-checks").innerHTML = theoryChecksHtml(methodId, result, input);
+  app.querySelector(".subsection-icon").innerHTML = icon("calculator");
+  app.querySelector("#iteration-details").innerHTML = result.rows.map((row, index) => iterationDetailHtml(methodId, row, index, result)).join("");
   panel.hidden = false;
+}
+
+function theoryChecksHtml(methodId, result, input) {
+  const first = result.rows[0]; const cards = [];
+  cards.push(checkCard("pass", "Inicialización", result.initialization.source, result.initialization.message));
+  if (methodId === "biseccion" || methodId === "falsa-posicion") {
+    const product = first.fa*first.fb;
+    cards.push(checkCard(product <= 0 ? "pass" : "warn", "Condición de Bolzano", `f(a)·f(b) = ${format(product, 7)}`, product <= 0 ? "Existe cambio de signo en el intervalo inicial." : "No se confirmó un cambio de signo."));
+    if (methodId === "biseccion") cards.push(checkCard(result.predictedIterations === null ? "info" : "pass", "Cota previa", result.predictedIterations === null ? "No aplica al criterio elegido" : `${result.predictedIterations} iteraciones`, "La cota clásica se calcula cuando la tolerancia es absoluta."));
+    else cards.push(checkCard("info", "Variante aplicada", result.variant === "modified" ? "Falsa posición modificada" : "Regula Falsi estándar", result.variant === "modified" ? "Reduce el peso del extremo que permanece fijo." : "Conserva los valores funcionales originales."));
+  } else if (methodId === "punto-fijo") {
+    cards.push(checkCard(result.convergenceFactor < 1 ? "pass" : "warn", "Convergencia local", `|g′(x*)| ≈ ${format(result.convergenceFactor, 7)}`, result.convergenceFactor < 1 ? "El factor local es compatible con convergencia." : "El factor local advierte posible divergencia."));
+    cards.push(result.intervalAnalysis
+      ? checkCard(result.intervalAnalysis.mapsInside && result.intervalAnalysis.maxSlope < 1 ? "pass" : "warn", "Teorema en el intervalo", `g([a,b]) ${result.intervalAnalysis.mapsInside ? "⊂" : "⊄"} [a,b]; máx|g′|≈${format(result.intervalAnalysis.maxSlope, 6)}`, `Intervalo analizado: [${format(result.intervalAnalysis.a)}, ${format(result.intervalAnalysis.b)}].`)
+      : checkCard("info", "Análisis de intervalo", "No solicitado", "Puedes ingresar a y b para comprobar invariancia y contracción."));
+    if (result.alternativeAnalysis) cards.push(checkCard(result.alternativeAnalysis.factor < result.convergenceFactor ? "pass" : "info", "Comparación de despejes", `|g₂′|≈${format(result.alternativeAnalysis.factor, 7)}`, result.alternativeAnalysis.factor < result.convergenceFactor ? "La segunda forma tiene mejor factor local." : "La segunda forma no mejora el factor local."));
+  } else if (methodId === "newton") {
+    const minimumDerivative = Math.min(...result.rows.map((row) => Math.abs(row.derivative)));
+    cards.push(checkCard(minimumDerivative > 1e-10 ? "pass" : "warn", "Derivada durante el proceso", `mín |f′(xₙ)| = ${format(minimumDerivative, 7)}`, "Una derivada demasiado cercana a cero vuelve inestable la división."));
+    cards.push(checkCard("info", "Derivada utilizada", result.derivativeSource, input.variant === "modified" ? `Newton modificado con multiplicidad m=${result.multiplicity}.` : "Newton-Raphson estándar con m=1."));
+  } else {
+    const minimumDenominator = Math.min(...result.rows.map((row) => Math.abs(row.f0-row.f1)));
+    cards.push(checkCard(minimumDenominator > 1e-12 ? "pass" : "warn", "Denominador de la secante", `mín |f(xₙ₋₁)−f(xₙ)| = ${format(minimumDenominator, 7)}`, "Debe mantenerse distinto de cero para calcular la pendiente aproximada."));
+    cards.push(checkCard("info", "Derivada", "No requerida", "La pendiente se aproxima con dos evaluaciones consecutivas."));
+  }
+  cards.push(checkCard(result.converged ? "pass" : "warn", "Resultado final", result.converged ? "Convergencia alcanzada" : "Máximo de iteraciones", `|f(x*)|=${format(result.residual, 7)} después de ${result.rows.length} iteraciones.`));
+  return cards.join("");
+}
+
+function iterationDetailHtml(methodId, row, index, result) {
+  let formula = "", decision = "";
+  if (methodId === "biseccion") {
+    const goesLeft = row.fa*row.fx < 0;
+    formula = `xᵣ=(${format(row.a)}+${format(row.b)})/2=${format(row.x)}; f(xᵣ)=${format(row.fx)}`;
+    decision = goesLeft ? `f(a)·f(xᵣ)<0 ⇒ nuevo intervalo [${format(row.a)}, ${format(row.x)}]` : `f(a)·f(xᵣ)≥0 ⇒ nuevo intervalo [${format(row.x)}, ${format(row.b)}]`;
+  } else if (methodId === "falsa-posicion") {
+    formula = `xᵣ=${format(row.b)}−(${format(row.fb)})(${format(row.a)}−${format(row.b)})/[${format(row.fa)}−${format(row.fb)}]=${format(row.x)}`;
+    decision = row.fa*row.fx < 0 ? `Se reemplaza b por xᵣ; queda [${format(row.a)}, ${format(row.x)}].` : `Se reemplaza a por xᵣ; queda [${format(row.x)}, ${format(row.b)}].`;
+  } else if (methodId === "punto-fijo") {
+    formula = `x${row.i}=g(${format(row.x)})=${format(row.gx)}; |g′(${format(row.x)})|=${format(Math.abs(row.gprime), 7)}`;
+    decision = Math.abs(row.gprime) < 1 ? "La pendiente local favorece la contracción." : "La pendiente local puede alejar la sucesión de la raíz.";
+  } else if (methodId === "newton") {
+    formula = `x${row.i}=${format(row.x)}−${result.multiplicity}(${format(row.fx)})/${format(row.derivative)}=${format(row.next)}`;
+    decision = `La tangente actualiza la aproximación; |f(x${row.i})|=${format(row.residual, 7)}.`;
+  } else {
+    formula = `x${row.i+1}=${format(row.x1)}−(${format(row.f1)})(${format(row.x0)}−${format(row.x1)})/[${format(row.f0)}−${format(row.f1)}]=${format(row.next)}`;
+    decision = `La secante usa los dos últimos puntos; |f(x${row.i+1})|=${format(row.residual, 7)}.`;
+  }
+  const stopUnit = result.criterion === "relative" ? " %" : ""; const stopValue = row.stopValue === null ? "—" : `${format(row.stopValue, 7)}${stopUnit}`;
+  return `<details class="iteration-card ${row.meets ? "meets" : ""}" ${index === 0 ? "open" : ""}><summary><span>Iteración ${String(row.i).padStart(2,"0")}</span><b>${safe(methodId === "biseccion" || methodId === "falsa-posicion" ? `xᵣ=${format(row.x)}` : methodId === "punto-fijo" ? `x=${format(row.gx)}` : `x=${format(row.next)}`)}</b><em>${row.meets ? "Criterio cumplido" : stopValue}</em></summary><div><code>${safe(formula)}</code><p>${safe(decision)}</p><small>${safe(criterionLabel(result.criterion))}: ${safe(stopValue)}</small></div></details>`;
 }
 
 function codeExpression(source, language) {
