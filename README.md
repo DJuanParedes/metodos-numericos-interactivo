@@ -1,12 +1,13 @@
 # NúmLab — Métodos numéricos interactivos
 
-Aplicación web educativa para resolver y explorar los contenidos de las tres guías proporcionadas:
+Aplicación web educativa para resolver y explorar los contenidos de las cuatro guías proporcionadas:
 
 - teoría de errores: error absoluto y relativo, comparación de mediciones, error iterativo, criterio de Scarborough, sistema de punto flotante, Taylor, redondeo/truncamiento y cancelación catastrófica;
 - métodos cerrados: bisección y falsa posición;
 - métodos abiertos: punto fijo, Newton-Raphson y secante.
+- raíces de polinomios: criterio de Descartes, cota global de Lagrange, método de Müller, evaluación de Horner, deflación y análisis de estabilidad en el círculo unitario.
 
-Cada método de raíces permite cambiar la función, los valores iniciales, la tolerancia y el máximo de iteraciones. La aplicación muestra el resultado, interpretación, tabla completa, gráfica de la función, convergencia del error y descarga CSV.
+Todos los campos comienzan vacíos: el usuario debe ingresar la función o coeficientes, valores iniciales, tolerancia y máximo de iteraciones. La aplicación muestra el resultado, interpretación, tabla completa, gráfica de la función, convergencia del error y descarga CSV.
 
 ## Sintaxis de funciones
 
