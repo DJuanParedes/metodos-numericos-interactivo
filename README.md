@@ -11,6 +11,8 @@ Aplicación web educativa adaptada a las guías teóricas, prácticas y de apren
 
 Todos los campos comienzan vacíos. El usuario elige si ingresará los valores iniciales o si desea que el programa los estime. En el modo automático, el intervalo se obtiene mediante aislamiento de cambios de signo; para polinomios, los puntos de Müller se generan usando las cotas calculadas. La procedencia de cualquier estimación siempre se muestra en el resultado.
 
+Después de cada cálculo se presenta el desarrollo paso a paso: planteamiento, fórmula, sustitución de la primera iteración, criterio de parada y conclusión. En polinomios se detallan `D(z)`, `D(-z)`, las variaciones de signo, la región global, los cocientes de cada deflación y el resto de Horner. Los módulos también generan código reproducible en Python y MATLAB usando los valores ingresados por el usuario.
+
 ## Sintaxis de funciones
 
 Usa `x` como variable y punto decimal. Se aceptan operaciones como `+`, `-`, `*`, `/`, `^`, paréntesis y funciones como `sin`/`sen`, `cos`, `tan`, `exp`, `ln`, `log`, `sqrt` y `abs`. También se aceptan las constantes `pi` y `e`.
