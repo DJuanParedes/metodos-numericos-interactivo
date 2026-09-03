@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Calculadora interactiva de métodos numéricos con iteraciones, tablas y gráficas." />
+    <title>NúmLab | Métodos numéricos</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <button class="brand" type="button" data-action="home" aria-label="Ir al inicio">
+        <span class="brand-mark">N</span>
+        <span><strong>NúmLab</strong><small>Métodos numéricos</small></span>
+      </button>
+      <div class="topbar-note">Cálculos realizados en tu navegador</div>
+    </header>
+
+    <main id="app" tabindex="-1"></main>
+
+    <template id="home-template">
+      <section class="home-shell">
+        <div class="intro">
+          <p class="eyebrow">Herramienta de estudio</p>
+          <h1>¿Qué necesitas resolver?</h1>
+          <p>Elige un método. Podrás cambiar la función, los valores iniciales, la tolerancia y el número máximo de iteraciones.</p>
+        </div>
+        <div class="method-grid" id="method-grid"></div>
+      </section>
+    </template>
+
+    <template id="workspace-template">
+      <section class="workspace-shell">
+        <nav class="crumbs" aria-label="Navegación">
+          <button type="button" class="text-button" data-action="home">← Todos los métodos</button>
+          <span>/</span><strong id="crumb-method"></strong>
+        </nav>
+        <div class="workspace-heading">
+          <div><p class="eyebrow" id="method-family"></p><h1 id="method-title"></h1><p id="method-description"></p></div>
+          <label class="preset-field">Ejemplo de clase<select id="preset-select"></select></label>
+        </div>
+        <div class="workspace-grid">
+          <section class="panel controls-panel" aria-labelledby="parameters-title">
+            <div class="panel-heading"><span class="step-number">1</span><div><h2 id="parameters-title">Configura</h2><p>Edita los datos antes de calcular.</p></div></div>
+            <form id="method-form" class="field-grid"></form>
+            <div class="form-message" id="form-message" role="alert" aria-live="polite"></div>
+            <button type="submit" form="method-form" class="primary-button">Calcular</button>
+          </section>
+          <section class="panel results-panel" aria-labelledby="results-title">
+            <div class="panel-heading"><span class="step-number">2</span><div><h2 id="results-title">Resultado</h2><p id="result-status">Completa los datos para comenzar.</p></div></div>
+            <div class="metric-row" id="metric-row"></div>
+            <div class="interpretation" id="interpretation"></div>
+            <div class="charts-grid">
+              <div class="chart-card"><div class="chart-heading"><h3>Función e iteraciones</h3><span id="chart-range"></span></div><svg id="function-chart" viewBox="0 0 720 320" role="img" aria-label="Gráfica de la función"></svg></div>
+              <div class="chart-card"><div class="chart-heading"><h3>Convergencia del error</h3><span>Error relativo porcentual</span></div><svg id="error-chart" viewBox="0 0 720 260" role="img" aria-label="Gráfica del error por iteración"></svg></div>
+            </div>
+          </section>
+        </div>
+        <section class="panel table-panel">
+          <div class="panel-heading table-heading"><span class="step-number">3</span><div><h2>Iteraciones</h2><p>Revisa cómo avanza el método.</p></div><button type="button" class="secondary-button" id="download-csv" disabled>Descargar CSV</button></div>
+          <div class="table-wrap"><table id="iterations-table"></table></div>
+        </section>
+      </section>
+    </template>
+
+    <footer>Herramienta educativa basada en las guías de Métodos Numéricos proporcionadas. Verifica siempre el dominio y la interpretación física del resultado.</footer>
+
+    <script type="module" src="app.js"></script>
+  </body>
+</html>
+
