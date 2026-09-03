@@ -196,7 +196,7 @@ export function analyzePolynomial({ coefficients, z0, z1, z2, initialMode, toler
     if (current.length === 2) {
       const root = div(scale(current[1], -1), current[0]);
       const step = deflate(current, root);
-      stages.push({ stage: stageNumber, root, rows: [], remainder: abs(step.remainder), method: "solución lineal", seeds: [] });
+      stages.push({ stage: stageNumber, root, rows: [], remainder: abs(step.remainder), quotient: step.quotient, method: "solución lineal", seeds: [] });
       stageRoots.push(root);
       current = step.quotient;
       continue;
@@ -219,6 +219,7 @@ export function analyzePolynomial({ coefficients, z0, z1, z2, initialMode, toler
       root,
       rows: calculation.rows,
       remainder: abs(step.remainder),
+      quotient: step.quotient,
       method: calculation.fallback ? "respaldo numérico" : "Müller",
       seeds,
     });
