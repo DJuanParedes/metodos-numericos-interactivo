@@ -112,6 +112,7 @@ h1 { margin-bottom: 14px; color: var(--navy); font-size: clamp(2.1rem, 5vw, 4rem
 
 .workspace-grid { display: grid; grid-template-columns: minmax(290px, .72fr) minmax(500px, 1.28fr); gap: 20px; align-items: start; }
 .panel { border: 1px solid var(--line); border-radius: var(--radius); background: rgba(255,255,255,.96); box-shadow: 0 7px 22px rgba(16,42,67,.045); }
+.panel[hidden] { display: none; }
 .controls-panel, .results-panel, .table-panel, .error-calculator, .error-output { padding: 24px; }
 .panel-heading { display: flex; gap: 12px; align-items: flex-start; margin-bottom: 22px; }
 .panel-heading h2 { margin-bottom: 2px; color: var(--navy); font-size: 1.15rem; }
@@ -179,6 +180,28 @@ th:first-child, td:first-child { text-align: center; }
 th { color: var(--navy); background: #f4f8fb; font-size: .78rem; }
 tbody tr:last-child td { border-bottom: 0; }
 tbody tr:hover { background: #fbfdff; }
+
+.procedure-panel, .code-panel { margin-top: 20px; padding: 24px; }
+.procedure-grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 12px; }
+.procedure-step { min-height: 132px; padding: 16px; display: grid; grid-template-columns: 30px 1fr; gap: 12px; border: 1px solid var(--line); border-radius: 14px; background: linear-gradient(145deg,#fff,#f8fbfe); }
+.procedure-step > span { width: 30px; height: 30px; display: grid; place-items: center; border-radius: 9px; color: white; background: var(--blue); font-size: .75rem; font-weight: 850; box-shadow: 0 5px 11px rgba(23,111,209,.18); }
+.procedure-step h3 { margin: 2px 0 8px; color: var(--navy); font-size: .92rem; }
+.procedure-step code { margin-bottom: 8px; padding: 8px 10px; display: block; overflow-wrap: anywhere; border: 1px solid #c9e1f4; border-radius: 9px; color: #124c7c; background: #eff8ff; font-family: "Cascadia Code", Consolas, monospace; font-size: .78rem; line-height: 1.5; }
+.procedure-step p { margin: 0; color: var(--muted); font-size: .82rem; line-height: 1.48; }
+.procedure-step:last-child:nth-child(odd) { grid-column: 1 / -1; }
+.deflation-grid { margin-top: 18px; display: grid; gap: 10px; }
+.deflation-grid > h3 { margin: 0 0 2px; color: var(--navy); font-size: 1rem; }
+.deflation-card { padding: 13px 15px; display: grid; grid-template-columns: 78px 1fr; gap: 12px; align-items: start; border: 1px solid #c9e1f4; border-radius: 12px; background: #f6fbff; }
+.deflation-card > span { padding: 5px 7px; border-radius: 8px; color: var(--blue); background: white; text-align: center; font-size: .72rem; font-weight: 850; }
+.deflation-card strong, .deflation-card code, .deflation-card small { display: block; }
+.deflation-card strong { color: var(--navy); font-size: .84rem; }.deflation-card code { margin: 5px 0; color: #245273; font-size: .76rem; white-space: normal; }.deflation-card small { color: var(--muted); font-size: .74rem; }
+.code-heading { align-items: center; }
+.code-heading > div:nth-child(2) { margin-right: auto; }
+.code-actions { display: flex; flex-wrap: wrap; gap: 7px; justify-content: flex-end; }
+.language-button { min-height: 38px; padding: 7px 12px; border: 1px solid #b8c6d3; border-radius: 9px; color: var(--muted); background: white; font-size: .78rem; font-weight: 800; }
+.language-button:hover, .language-button.active { border-color: var(--blue); color: var(--blue); background: var(--blue-soft); }
+.code-panel pre { max-height: 430px; margin: 0; padding: 20px; overflow: auto; border: 1px solid #274a6b; border-radius: 14px; color: #dcecf8; background: #081b31; box-shadow: inset 0 1px 0 rgba(255,255,255,.06); }
+.code-panel pre code { font-family: "Cascadia Code", Consolas, monospace; font-size: .8rem; line-height: 1.65; white-space: pre; }
 
 .error-layout { display: grid; grid-template-columns: 250px minmax(300px, .78fr) minmax(360px, 1.22fr); gap: 20px; align-items: start; }
 .error-menu { display: grid; gap: 8px; }
@@ -262,6 +285,7 @@ footer { padding: 24px clamp(20px, 4vw, 64px) 34px; color: #728091; background: 
   .polynomial-theory-grid { grid-template-columns: 1fr; }
   .polynomial-init, .stability-card { grid-column: 1; }
   .interval-list { grid-template-columns: 1fr; }
+  .procedure-grid { grid-template-columns: 1fr; }.procedure-step:last-child:nth-child(odd) { grid-column: 1; }.procedure-panel, .code-panel { padding: 18px; }.code-heading { align-items: flex-start; }.code-actions { width: 100%; justify-content: flex-start; }.deflation-card { grid-template-columns: 1fr; }
   .table-heading { align-items: flex-start; }
   h1 { font-size: 2.25rem; }
 }
