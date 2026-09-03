@@ -137,23 +137,44 @@ function icon(name) {
     tangent: '<path d="M3 19C7 18 8 5 14 5c3 0 4 4 7 4M4 15L20 5"/><circle cx="11" cy="10" r="2"/>',
     trend: '<path d="M3 18L9 12l4 3 8-10M16 5h5v5"/>',
     polynomial: '<path d="M3 17C7 4 10 4 13 12s5 9 8-5"/><circle cx="5" cy="12" r="1.5"/><circle cx="13" cy="12" r="1.5"/><circle cx="20" cy="9" r="1.5"/>',
+    home: '<path d="M3 11.5L12 4l9 7.5"/><path d="M5.5 10v10h13V10M9.5 20v-6h5v6"/>',
+    edit: '<path d="M4 20h4l11-11-4-4L4 16v4zM13.5 6.5l4 4"/>',
+    calculator: '<rect x="4" y="3" width="16" height="18" rx="2"/><path d="M7 7h10v3H7zM8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01M16 18h.01"/>',
+    chart: '<path d="M4 19V9M10 19V5M16 19v-7M22 19H2"/><path d="M3 7l5-3 5 4 7-5"/>',
+    table: '<rect x="3" y="5" width="18" height="15" rx="2"/><path d="M3 10h18M9 5v15M15 5v15"/>',
+    download: '<path d="M12 3v12M7 10l5 5 5-5M4 21h16"/>',
+    play: '<circle cx="12" cy="12" r="9"/><path d="M10 8l6 4-6 4V8z"/>',
+    check: '<circle cx="12" cy="12" r="9"/><path d="M8 12l2.5 2.5L16.5 8"/>',
+    warning: '<path d="M12 3L2.7 20h18.6L12 3z"/><path d="M12 9v5M12 17.5h.01"/>',
+    book: '<path d="M4 5.5A3.5 3.5 0 017.5 2H11v17H7.5A3.5 3.5 0 004 22V5.5zM20 5.5A3.5 3.5 0 0016.5 2H13v17h3.5A3.5 3.5 0 0120 22V5.5z"/>',
+    settings: '<path d="M4 6h10M18 6h2M4 12h3M11 12h9M4 18h8M16 18h4"/><circle cx="16" cy="6" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="14" cy="18" r="2"/>',
+    chevron: '<path d="M9 5l7 7-7 7"/>',
+    layers: '<path d="M12 3L3 8l9 5 9-5-9-5zM3 12l9 5 9-5M3 16l9 5 9-5"/>',
   };
   return `<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${paths[name] ?? paths.target}</svg>`;
 }
 
+function actionLabel(iconName, text) { return `<span class="button-icon">${icon(iconName)}</span><span>${text}</span>`; }
+function stepBadge(number, iconName) { return `${icon(iconName)}<small>${number}</small>`; }
+function backLink() { return `<button type="button" class="text-button" data-action="home"><span class="back-icon">${icon("home")}</span><span>Todos los métodos</span></button>`; }
+function titleBlock(iconName, eyebrow, title, description) { return `<div class="method-title-row"><span class="method-hero-icon">${icon(iconName)}</span><div><p class="eyebrow">${eyebrow}</p><h1>${title}</h1><p>${description}</p></div></div>`; }
+function formulaBlock(label, formula, description) { return `<span class="formula-label"><i>${icon("book")}</i>${label}</span><strong>${formula}</strong><p>${description}</p>`; }
+function emptyState(text, iconName = "chart") { return `<div class="empty-state-content"><span class="empty-icon">${icon(iconName)}</span><span>${text}</span></div>`; }
+
 function renderHome() {
   state.currentMethod = null; state.lastResult = null;
   app.replaceChildren(homeTemplate.content.cloneNode(true));
+  app.querySelector("#journey-strip").innerHTML = `<div><span>${icon("edit")}</span><p><b>1. Ingresa</b><small>Tu función y tus datos</small></p></div><i>${icon("chevron")}</i><div><span>${icon("calculator")}</span><p><b>2. Calcula</b><small>Con el método de clase</small></p></div><i>${icon("chevron")}</i><div><span>${icon("chart")}</span><p><b>3. Interpreta</b><small>Tablas, error y gráfica</small></p></div>`;
   const grid = app.querySelector("#method-grid");
   ["Sesión 1", "Sesión 2", "Sesión 3", "Sesión 4"].forEach((session) => {
     const section = document.createElement("section"); section.className = "session-block";
     const sessionMethods = methods.filter((method) => method.session === session);
-    section.innerHTML = `<div class="session-heading"><div><span>${session}</span><h2>${sessionMethods[0].family}</h2></div><small>${sessionMethods.length} ${sessionMethods.length === 1 ? "módulo" : "módulos"}</small></div><div class="method-grid"></div>`;
+    section.innerHTML = `<div class="session-heading"><div><i class="session-icon">${icon(sessionMethods[0].icon)}</i><span>${session}</span><h2>${sessionMethods[0].family}</h2></div><small>${sessionMethods.length} ${sessionMethods.length === 1 ? "módulo" : "módulos"}</small></div><div class="method-grid"></div>`;
     const cards = section.querySelector(".method-grid");
     sessionMethods.forEach((method) => {
       const button = document.createElement("button");
       button.type = "button"; button.className = `method-card session-${session.at(-1)}`; button.dataset.method = method.id;
-      button.innerHTML = `<div class="card-top"><span class="method-icon">${icon(method.icon)}</span><span class="card-index">${method.index}</span></div><p class="card-family">${method.family}</p><h3>${method.title}</h3><p>${method.description}</p><span class="open-label">Abrir método <b>→</b></span>`;
+      button.innerHTML = `<div class="card-top"><span class="method-icon">${icon(method.icon)}</span><span class="card-index">${method.index}</span></div><p class="card-family">${method.family}</p><h3>${method.title}</h3><p>${method.description}</p><span class="open-label">Abrir método <b>${icon("chevron")}</b></span>`;
       cards.append(button);
     });
     grid.append(section);
@@ -195,7 +216,11 @@ function renderMethod(methodId) {
   state.currentMethod = methodId; state.lastResult = null;
   app.replaceChildren(workspaceTemplate.content.cloneNode(true));
   app.querySelector("#crumb-method").textContent = method.title; app.querySelector("#method-family").textContent = method.family; app.querySelector("#method-title").textContent = method.title; app.querySelector("#method-description").textContent = method.description;
-  app.querySelector("#method-theory").innerHTML = `<span>Fórmula de clase</span><strong>${config.formula}</strong><p>${config.condition}</p>`;
+  app.querySelector("#back-icon").innerHTML = icon("home"); app.querySelector("#method-hero-icon").innerHTML = icon(method.icon);
+  app.querySelector("#method-theory").innerHTML = formulaBlock("Fórmula de clase", config.formula, config.condition);
+  app.querySelector('[data-step="1"]').innerHTML = stepBadge("1", "settings"); app.querySelector('[data-step="2"]').innerHTML = stepBadge("2", "chart"); app.querySelector('[data-step="3"]').innerHTML = stepBadge("3", "table");
+  app.querySelector("#calculate-button").innerHTML = actionLabel("play", "Calcular"); app.querySelector("#download-csv").innerHTML = actionLabel("download", "Descargar CSV");
+  app.querySelector("#function-chart-icon").innerHTML = icon("trend"); app.querySelector("#error-chart-icon").innerHTML = icon("chart");
   const form = app.querySelector("#method-form"); loadBlankForm(form, config);
   form.addEventListener("submit", (event) => { event.preventDefault(); runMethod(methodId); });
   app.querySelector("#download-csv").addEventListener("click", downloadCsv);
@@ -221,13 +246,13 @@ function runMethod(methodId) {
     state.lastTable = { columns: config.columns, rows: result.rows, method: methods.find((item) => item.id === methodId).title };
     renderNumericalResult(result, config); return result;
   } catch (error) {
-    state.lastResult = null; app.querySelector("#download-csv").disabled = true; message.textContent = error.message; app.querySelector("#result-status").textContent = "No se pudo completar el cálculo."; return null;
+    state.lastResult = null; app.querySelector("#download-csv").disabled = true; message.textContent = error.message; app.querySelector("#result-status").className = "result-status danger"; app.querySelector("#result-status").textContent = "No se pudo completar el cálculo."; return null;
   }
 }
 
 function renderNumericalResult(result, config) {
   const status = result.converged ? "Convergió con el criterio indicado." : "Se alcanzó el máximo de iteraciones.";
-  app.querySelector("#result-status").textContent = `${status} ${result.rows.length} iteraciones.`;
+  app.querySelector("#result-status").className = `result-status ${result.converged ? "success" : "warning"}`; app.querySelector("#result-status").textContent = `${status} ${result.rows.length} iteraciones.`;
   const stopUnit = result.criterion === "relative" ? " %" : "";
   app.querySelector("#metric-row").innerHTML = `${metric("Raíz aproximada", format(result.root))}${metric("Residuo |f(x)|", format(result.residual, 6))}${metric(criterionLabel(result.criterion), result.stopValue === null ? "—" : `${format(result.stopValue, 6)}${stopUnit}`)}`;
   const initialization = app.querySelector("#initialization-note");
@@ -313,13 +338,13 @@ function drawErrorChart(rows, selector = "#error-chart", key = "stopValue") {
 function renderIsolation() {
   state.currentMethod = "aislamiento"; state.lastResult = null;
   app.innerHTML = `<section class="workspace-shell isolation-shell">
-    <nav class="crumbs"><button type="button" class="text-button" data-action="home">← Todos los métodos</button><span>/</span><strong>Aislamiento gráfico</strong></nav>
-    <div class="workspace-heading"><div><p class="eyebrow">Sesión 2 · método gráfico</p><h1>Aislamiento de raíces</h1><p>Evalúa la función en un rango y localiza intervalos con cambio de signo antes de aplicar un método iterativo.</p></div><aside class="formula-card"><span>Teorema de Bolzano</span><strong>f(a)·f(b) &lt; 0</strong><p>Garantiza al menos una raíz si f es continua en [a,b].</p></aside></div>
+    <nav class="crumbs">${backLink()}<span>/</span><strong>Aislamiento gráfico</strong></nav>
+    <div class="workspace-heading">${titleBlock("search", "Sesión 2 · método gráfico", "Aislamiento de raíces", "Evalúa la función en un rango y localiza intervalos con cambio de signo antes de aplicar un método iterativo.")}<aside class="formula-card">${formulaBlock("Teorema de Bolzano", "f(a)·f(b) &lt; 0", "Garantiza al menos una raíz si f es continua en [a,b].")}</aside></div>
     <div class="workspace-grid">
-      <section class="panel controls-panel"><div class="panel-heading"><span class="step-number">1</span><div><h2>Rango de exploración</h2><p>Todos los valores deben ser ingresados.</p></div></div><form id="isolation-form" class="field-grid"></form><div class="form-message" id="isolation-message" role="alert"></div><button type="submit" form="isolation-form" class="primary-button">Explorar función</button></section>
-      <section class="panel results-panel"><div class="panel-heading"><span class="step-number">2</span><div><h2>Intervalos encontrados</h2><p id="isolation-status">Completa los datos para comenzar.</p></div></div><div id="isolation-summary" class="empty-result">Aquí aparecerán los cambios de signo y posibles tangencias.</div><div class="chart-card isolation-chart-card"><div class="chart-heading"><h3>Gráfica y puntos evaluados</h3><span id="isolation-range"></span></div><svg id="isolation-chart" viewBox="0 0 720 340" role="img" aria-label="Gráfica para aislamiento de raíces"></svg></div></section>
+      <section class="panel controls-panel"><div class="panel-heading"><span class="step-number">${stepBadge("1", "settings")}</span><div><h2>Rango de exploración</h2><p>Todos los valores deben ser ingresados.</p></div></div><form id="isolation-form" class="field-grid"></form><div class="form-message" id="isolation-message" role="alert"></div><button type="submit" form="isolation-form" class="primary-button">${actionLabel("search", "Explorar función")}</button></section>
+      <section class="panel results-panel"><div class="panel-heading"><span class="step-number">${stepBadge("2", "chart")}</span><div><h2>Intervalos encontrados</h2><p id="isolation-status">Completa los datos para comenzar.</p></div></div><div id="isolation-summary" class="empty-result">${emptyState("Aquí aparecerán los cambios de signo y posibles tangencias.", "search")}</div><div class="chart-card isolation-chart-card"><div class="chart-heading"><h3><i>${icon("chart")}</i>Gráfica y puntos evaluados</h3><span id="isolation-range"></span></div><svg id="isolation-chart" viewBox="0 0 720 340" role="img" aria-label="Gráfica para aislamiento de raíces"></svg></div></section>
     </div>
-    <section class="panel table-panel"><div class="panel-heading table-heading"><span class="step-number">3</span><div><h2>Tabla de evaluación</h2><p>Los saltos de signo proponen intervalos para bisección o falsa posición.</p></div><button type="button" class="secondary-button" id="download-csv" disabled>Descargar CSV</button></div><div class="table-wrap"><table id="isolation-table"></table></div></section>
+    <section class="panel table-panel"><div class="panel-heading table-heading"><span class="step-number">${stepBadge("3", "table")}</span><div><h2>Tabla de evaluación</h2><p>Los saltos de signo proponen intervalos para bisección o falsa posición.</p></div><button type="button" class="secondary-button" id="download-csv" disabled>${actionLabel("download", "Descargar CSV")}</button></div><div class="table-wrap"><table id="isolation-table"></table></div></section>
   </section>`;
   const form = app.querySelector("#isolation-form");
   [
@@ -339,7 +364,7 @@ function calculateIsolation(form) {
   try {
     const result = scanForRoots(readMethodParameters(form)); state.lastResult = result;
     const total = result.intervals.length + result.exactRoots.length;
-    app.querySelector("#isolation-status").textContent = `${total} hallazgo${total === 1 ? "" : "s"} directo${total === 1 ? "" : "s"} en el rango.`;
+    app.querySelector("#isolation-status").className = "result-status success"; app.querySelector("#isolation-status").textContent = `${total} hallazgo${total === 1 ? "" : "s"} directo${total === 1 ? "" : "s"} en el rango.`;
     const intervals = result.intervals.length ? result.intervals.map((item, index) => `<li><span>${index+1}</span><div><strong>[${format(item.a, 7)}, ${format(item.b, 7)}]</strong><small>f(a)=${format(item.fa, 5)} · f(b)=${format(item.fb, 5)}</small></div></li>`).join("") : `<li class="muted-list-item">No se detectaron cambios de signo.</li>`;
     const exact = result.exactRoots.length ? `<p class="root-chip-row">Raíces sobre la malla: ${result.exactRoots.map((value) => `<b>x=${format(value, 8)}</b>`).join("")}</p>` : "";
     const tangencies = result.tangencies.length ? `<div class="warning-note"><strong>Posibles raíces por tangencia</strong><p>${result.tangencies.map((item) => `x≈${format(item.x, 7)}`).join(", ")}. Revísalas con una malla más fina: una raíz múltiple puede no cambiar de signo.</p></div>` : "";
@@ -379,7 +404,7 @@ function downloadCsv() {
 
 function renderErrors() {
   state.currentMethod = "errores"; state.lastResult = null;
-  app.innerHTML = `<section class="workspace-shell error-shell"><nav class="crumbs"><button type="button" class="text-button" data-action="home">← Todos los métodos</button><span>/</span><strong>Teoría de errores</strong></nav><div class="workspace-heading"><div><p class="eyebrow">Sesión 1 · fundamentos</p><h1>Teoría de errores</h1><p>Resuelve los nueve tipos de ejercicios y analiza cómo la representación finita afecta la confiabilidad numérica.</p></div><aside class="formula-card"><span>Relación fundamental</span><strong>Valor verdadero = aproximado + error</strong><p>El error relativo permite comparar magnitudes de escalas distintas.</p></aside></div><div class="error-layout"><aside class="error-menu" id="error-menu" aria-label="Herramientas de errores"></aside><section class="panel error-calculator"><div class="panel-heading"><span class="step-number">1</span><div><h2 id="error-tool-title"></h2><p id="error-tool-description"></p></div></div><form id="error-form" class="field-grid"></form><div class="form-message" id="error-message" role="alert"></div><button type="submit" form="error-form" class="primary-button">Calcular</button></section><section class="panel error-output"><div class="panel-heading"><span class="step-number">2</span><div><h2>Resultado</h2><p>Valores calculados y explicación.</p></div></div><div id="error-result" class="error-result"></div></section></div></section>`;
+  app.innerHTML = `<section class="workspace-shell error-shell"><nav class="crumbs">${backLink()}<span>/</span><strong>Teoría de errores</strong></nav><div class="workspace-heading">${titleBlock("target", "Sesión 1 · fundamentos", "Teoría de errores", "Resuelve los nueve tipos de ejercicios y analiza cómo la representación finita afecta la confiabilidad numérica.")}<aside class="formula-card">${formulaBlock("Relación fundamental", "Valor verdadero = aproximado + error", "El error relativo permite comparar magnitudes de escalas distintas.")}</aside></div><div class="error-layout"><aside class="error-menu" id="error-menu" aria-label="Herramientas de errores"></aside><section class="panel error-calculator"><div class="panel-heading"><span class="step-number">${stepBadge("1", "settings")}</span><div><h2 id="error-tool-title"></h2><p id="error-tool-description"></p></div></div><form id="error-form" class="field-grid"></form><div class="form-message" id="error-message" role="alert"></div><button type="submit" form="error-form" class="primary-button">${actionLabel("play", "Calcular")}</button></section><section class="panel error-output"><div class="panel-heading"><span class="step-number">${stepBadge("2", "check")}</span><div><h2>Resultado</h2><p>Valores calculados y explicación.</p></div></div><div id="error-result" class="error-result"></div></section></div></section>`;
   const menu = app.querySelector("#error-menu");
   errorTools.forEach((tool, index) => { const button = document.createElement("button"); button.type = "button"; button.dataset.errorTool = tool.id; button.innerHTML = `<span class="menu-icon">${icon(tool.icon)}</span><strong>${tool.label}</strong><small>${String(index + 1).padStart(2, "0")}</small>`; menu.append(button); });
   menu.addEventListener("click", (event) => { const id = event.target.closest("[data-error-tool]")?.dataset.errorTool; if (id) renderErrorTool(id); });
@@ -393,7 +418,7 @@ function renderErrorTool(toolId) {
   const form = app.querySelector("#error-form"); form.replaceChildren(); errorDefaults[toolId].forEach((item) => form.append(createField(item)));
   form.onsubmit = (event) => { event.preventDefault(); calculateErrorTool(toolId, new FormData(form)); };
   app.querySelector("#error-message").textContent = "";
-  app.querySelector("#error-result").innerHTML = `<div class="empty-result">Completa todos los campos para ver el resultado.</div>`;
+  app.querySelector("#error-result").innerHTML = `<div class="empty-result">${emptyState("Completa todos los campos para ver el resultado.", "calculator")}</div>`;
 }
 
 function metric(label, value) { return `<div class="metric"><span>${label}</span><strong>${value}</strong></div>`; }
@@ -459,24 +484,24 @@ function calculateErrorTool(toolId, formData) {
       metrics = metric("Resta con raíces redondeadas", format(naive)) + metric("Resultado estable", format(stable)) + metric("Error relativo", relative === null ? "No definido" : `${format(relative)} %`); explanation = "Al restar raíces casi iguales se cancelan cifras útiles. La forma racionalizada (a-b)/(√a+√b) evita esa pérdida de precisión.";
     }
     output.innerHTML = `<div class="metric-row error-metrics">${metrics}</div>${table}<div class="explanation">${explanation}</div>`; state.lastResult = { tool: toolId, summary: explanation };
-  } catch (error) { message.textContent = error.message; output.innerHTML = `<div class="empty-result">Corrige los datos para ver el resultado.</div>`; }
+  } catch (error) { message.textContent = error.message; output.innerHTML = `<div class="empty-result">${emptyState("Corrige los datos para ver el resultado.", "warning")}</div>`; }
 }
 
 function renderPolynomials() {
   state.currentMethod = "polinomios"; state.lastResult = null;
   app.innerHTML = `<section class="workspace-shell polynomial-shell">
-    <nav class="crumbs"><button type="button" class="text-button" data-action="home">← Todos los métodos</button><span>/</span><strong>Raíces de polinomios</strong></nav>
-    <div class="workspace-heading"><div><p class="eyebrow">Sesión 4 · raíces polinomiales</p><h1>Müller y polinomios</h1><p>Aplica métodos convencionales y Müller con deflación, incluyendo raíces complejas y estabilidad en el círculo unitario.</p></div><aside class="formula-card"><span>Método de Müller</span><strong>Interpolación cuadrática con z₀, z₁ y z₂</strong><p>Si faltan puntos, las cotas de Lagrange y Cauchy delimitan la búsqueda.</p></aside></div>
+    <nav class="crumbs">${backLink()}<span>/</span><strong>Raíces de polinomios</strong></nav>
+    <div class="workspace-heading">${titleBlock("polynomial", "Sesión 4 · raíces polinomiales", "Müller y polinomios", "Aplica métodos convencionales y Müller con deflación, incluyendo raíces complejas y estabilidad en el círculo unitario.")}<aside class="formula-card">${formulaBlock("Método de Müller", "Interpolación cuadrática con z₀, z₁ y z₂", "Si faltan puntos, las cotas de Lagrange y Cauchy delimitan la búsqueda.")}</aside></div>
     <div class="polynomial-input-grid">
-      <section class="panel controls-panel"><div class="panel-heading"><span class="step-number">1</span><div><h2>Datos del polinomio</h2><p>No hay valores precargados.</p></div></div><form id="polynomial-form" class="field-grid"></form><div class="form-message" id="polynomial-message" role="alert"></div><button type="submit" form="polynomial-form" class="primary-button">Analizar y calcular raíces</button></section>
-      <section class="panel polynomial-summary"><div class="panel-heading"><span class="step-number">2</span><div><h2>Análisis previo</h2><p>Descartes, cotas e inicialización.</p></div></div><div id="polynomial-theory" class="empty-result">Completa los datos para ver el análisis.</div></section>
+      <section class="panel controls-panel"><div class="panel-heading"><span class="step-number">${stepBadge("1", "settings")}</span><div><h2>Datos del polinomio</h2><p>No hay valores precargados.</p></div></div><form id="polynomial-form" class="field-grid"></form><div class="form-message" id="polynomial-message" role="alert"></div><button type="submit" form="polynomial-form" class="primary-button">${actionLabel("play", "Analizar y calcular raíces")}</button></section>
+      <section class="panel polynomial-summary"><div class="panel-heading"><span class="step-number">${stepBadge("2", "search")}</span><div><h2>Análisis previo</h2><p>Descartes, cotas e inicialización.</p></div></div><div id="polynomial-theory" class="empty-result">${emptyState("Completa los datos para ver el análisis.", "search")}</div></section>
     </div>
-    <section class="panel polynomial-roots"><div class="panel-heading"><span class="step-number">3</span><div><h2>Raíces y deflación</h2><p>Horner verifica el residuo y la deflación de cada raíz.</p></div></div><div id="polynomial-roots" class="empty-result">Las raíces aparecerán después del cálculo.</div></section>
+    <section class="panel polynomial-roots"><div class="panel-heading"><span class="step-number">${stepBadge("3", "layers")}</span><div><h2>Raíces y deflación</h2><p>Horner verifica el residuo y la deflación de cada raíz.</p></div></div><div id="polynomial-roots" class="empty-result">${emptyState("Las raíces aparecerán después del cálculo.", "polynomial")}</div></section>
     <div class="polynomial-charts">
-      <section class="panel chart-panel"><div class="panel-heading"><span class="step-number">4</span><div><h2>Plano complejo</h2><p>El círculo unitario permite evaluar la estabilidad.</p></div></div><div class="chart-card"><svg id="complex-chart" viewBox="0 0 620 420" role="img" aria-label="Raíces en el plano complejo"></svg></div></section>
-      <section class="panel chart-panel"><div class="panel-heading"><span class="step-number">5</span><div><h2>Convergencia de Müller</h2><p>Error relativo estimado por iteración.</p></div></div><div class="chart-card"><svg id="poly-error-chart" viewBox="0 0 720 260" role="img" aria-label="Convergencia de Müller"></svg></div></section>
+      <section class="panel chart-panel"><div class="panel-heading"><span class="step-number">${stepBadge("4", "target")}</span><div><h2>Plano complejo</h2><p>El círculo unitario permite evaluar la estabilidad.</p></div></div><div class="chart-card"><svg id="complex-chart" viewBox="0 0 620 420" role="img" aria-label="Raíces en el plano complejo"></svg></div></section>
+      <section class="panel chart-panel"><div class="panel-heading"><span class="step-number">${stepBadge("5", "chart")}</span><div><h2>Convergencia de Müller</h2><p>Error relativo estimado por iteración.</p></div></div><div class="chart-card"><svg id="poly-error-chart" viewBox="0 0 720 260" role="img" aria-label="Convergencia de Müller"></svg></div></section>
     </div>
-    <section class="panel table-panel"><div class="panel-heading"><span class="step-number">6</span><div><h2>Iteraciones de Müller y deflación</h2><p>Cada etapa reduce el grado del polinomio hasta obtener todas las raíces.</p></div></div><div class="table-wrap"><table id="muller-table"></table></div></section>
+    <section class="panel table-panel"><div class="panel-heading"><span class="step-number">${stepBadge("6", "table")}</span><div><h2>Iteraciones de Müller y deflación</h2><p>Cada etapa reduce el grado del polinomio hasta obtener todas las raíces.</p></div></div><div class="table-wrap"><table id="muller-table"></table></div></section>
   </section>`;
   const form = app.querySelector("#polynomial-form");
   [
@@ -502,7 +527,7 @@ function calculatePolynomial(formData) {
     const result = analyzePolynomial(input); state.lastResult = result; renderPolynomialResult(result); return result;
   } catch (error) {
     state.lastResult = null; message.textContent = error.message;
-    app.querySelector("#polynomial-theory").className = "empty-result"; app.querySelector("#polynomial-theory").textContent = "Corrige los datos para ver el análisis.";
+    app.querySelector("#polynomial-theory").className = "empty-result"; app.querySelector("#polynomial-theory").innerHTML = emptyState("Corrige los datos para ver el análisis.", "warning");
     return null;
   }
 }
