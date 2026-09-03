@@ -182,6 +182,11 @@ tbody tr:last-child td { border-bottom: 0; }
 tbody tr:hover { background: #fbfdff; }
 
 .procedure-panel, .code-panel { margin-top: 20px; padding: 24px; }
+.theory-checks { margin-bottom: 16px; display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 10px; }
+.check-card { min-height: 92px; padding: 13px; display: grid; grid-template-columns: 34px 1fr; gap: 10px; border: 1px solid var(--line); border-radius: 13px; background: #fbfdff; }
+.check-card > span { width: 34px; height: 34px; display: grid; place-items: center; border-radius: 10px; color: var(--blue); background: var(--blue-soft); }
+.check-card > span svg { width: 18px; height: 18px; }.check-card small, .check-card strong { display: block; }.check-card small { color: var(--muted); font-size: .69rem; font-weight: 750; text-transform: uppercase; letter-spacing: .04em; }.check-card strong { margin: 3px 0; color: var(--navy); font-size: .82rem; line-height: 1.3; }.check-card p { margin: 0; color: var(--muted); font-size: .72rem; line-height: 1.35; }
+.check-card.pass { border-color: #b5dfcd; background: #f2fbf7; }.check-card.pass > span { color: var(--success); background: #e3f7ee; }.check-card.warn { border-color: #edd09a; background: #fffaf0; }.check-card.warn > span { color: #9a5b00; background: #fff0c9; }
 .procedure-grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 12px; }
 .procedure-step { min-height: 132px; padding: 16px; display: grid; grid-template-columns: 30px 1fr; gap: 12px; border: 1px solid var(--line); border-radius: 14px; background: linear-gradient(145deg,#fff,#f8fbfe); }
 .procedure-step > span { width: 30px; height: 30px; display: grid; place-items: center; border-radius: 9px; color: white; background: var(--blue); font-size: .75rem; font-weight: 850; box-shadow: 0 5px 11px rgba(23,111,209,.18); }
@@ -189,6 +194,12 @@ tbody tr:hover { background: #fbfdff; }
 .procedure-step code { margin-bottom: 8px; padding: 8px 10px; display: block; overflow-wrap: anywhere; border: 1px solid #c9e1f4; border-radius: 9px; color: #124c7c; background: #eff8ff; font-family: "Cascadia Code", Consolas, monospace; font-size: .78rem; line-height: 1.5; }
 .procedure-step p { margin: 0; color: var(--muted); font-size: .82rem; line-height: 1.48; }
 .procedure-step:last-child:nth-child(odd) { grid-column: 1 / -1; }
+.iteration-breakdown { margin-top: 22px; padding-top: 20px; border-top: 1px solid var(--line); }
+.subsection-heading { margin-bottom: 12px; display: flex; align-items: center; gap: 10px; }.subsection-icon { width: 36px; height: 36px; display: grid; place-items: center; border-radius: 11px; color: var(--blue); background: var(--blue-soft); }.subsection-icon svg { width: 19px; height: 19px; }.subsection-heading h3 { margin: 0 0 2px; color: var(--navy); font-size: 1rem; }.subsection-heading p { margin: 0; color: var(--muted); font-size: .78rem; }
+.iteration-details { display: grid; gap: 8px; }
+.iteration-card { overflow: hidden; border: 1px solid var(--line); border-radius: 11px; background: white; }
+.iteration-card summary { min-height: 46px; padding: 9px 13px; display: grid; grid-template-columns: 110px minmax(0,1fr) auto; gap: 12px; align-items: center; cursor: pointer; list-style: none; }.iteration-card summary::-webkit-details-marker { display: none; }.iteration-card summary::before { content: "+"; width: 22px; height: 22px; display: grid; place-items: center; grid-column: 1; grid-row: 1; margin-right: 0; border-radius: 7px; color: var(--blue); background: var(--blue-soft); font-weight: 850; }.iteration-card[open] summary::before { content: "−"; }.iteration-card summary > span { grid-column: 1; padding-left: 30px; color: var(--navy); font-size: .76rem; font-weight: 850; }.iteration-card summary > b { overflow: hidden; color: #24415d; font-size: .78rem; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }.iteration-card summary > em { padding: 4px 7px; border-radius: 999px; color: var(--muted); background: #f1f5f8; font-size: .68rem; font-style: normal; white-space: nowrap; }.iteration-card.meets { border-color: #8dd0b5; }.iteration-card.meets summary > em { color: #066446; background: #e3f7ee; }
+.iteration-card > div { padding: 13px 15px 15px 45px; border-top: 1px solid var(--line); background: #fbfdff; }.iteration-card > div code { display: block; overflow-wrap: anywhere; color: #124c7c; font-family: "Cascadia Code",Consolas,monospace; font-size: .78rem; line-height: 1.5; }.iteration-card > div p { margin: 7px 0 4px; color: #42566a; font-size: .8rem; line-height: 1.45; }.iteration-card > div small { color: var(--muted); font-size: .72rem; }
 .deflation-grid { margin-top: 18px; display: grid; gap: 10px; }
 .deflation-grid > h3 { margin: 0 0 2px; color: var(--navy); font-size: 1rem; }
 .deflation-card { padding: 13px 15px; display: grid; grid-template-columns: 78px 1fr; gap: 12px; align-items: start; border: 1px solid #c9e1f4; border-radius: 12px; background: #f6fbff; }
@@ -270,6 +281,7 @@ footer { padding: 24px clamp(20px, 4vw, 64px) 34px; color: #728091; background: 
   .error-layout { grid-template-columns: 1fr 1fr; }
   .error-menu { grid-column: 1 / -1; grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .workspace-heading { grid-template-columns: 1fr; align-items: stretch; }
+  .theory-checks { grid-template-columns: repeat(2,minmax(0,1fr)); }
 }
 @media (max-width: 620px) {
   .topbar-note { display: none; }
@@ -285,7 +297,7 @@ footer { padding: 24px clamp(20px, 4vw, 64px) 34px; color: #728091; background: 
   .polynomial-theory-grid { grid-template-columns: 1fr; }
   .polynomial-init, .stability-card { grid-column: 1; }
   .interval-list { grid-template-columns: 1fr; }
-  .procedure-grid { grid-template-columns: 1fr; }.procedure-step:last-child:nth-child(odd) { grid-column: 1; }.procedure-panel, .code-panel { padding: 18px; }.code-heading { align-items: flex-start; }.code-actions { width: 100%; justify-content: flex-start; }.deflation-card { grid-template-columns: 1fr; }
+  .theory-checks, .procedure-grid { grid-template-columns: 1fr; }.procedure-step:last-child:nth-child(odd) { grid-column: 1; }.procedure-panel, .code-panel { padding: 18px; }.code-heading { align-items: flex-start; }.code-actions { width: 100%; justify-content: flex-start; }.deflation-card { grid-template-columns: 1fr; }.iteration-card summary { grid-template-columns: 1fr auto; gap: 6px; }.iteration-card summary > span { grid-column: 1; }.iteration-card summary > b { grid-column: 1; padding-left: 30px; }.iteration-card summary > em { grid-column: 2; grid-row: 1 / 3; }.iteration-card > div { padding-left: 15px; }
   .table-heading { align-items: flex-start; }
   h1 { font-size: 2.25rem; }
 }
