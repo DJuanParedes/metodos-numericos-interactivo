@@ -1,5 +1,6 @@
 import { compileExpression, roundSignificant, truncateSignificant } from "./math-engine.js";
 import { bisection, falsePosition, fixedPoint, newton, secant } from "./numerical.js";
+import { analyzePolynomial } from "./polynomial.js";
 
 const app = document.querySelector("#app");
 const homeTemplate = document.querySelector("#home-template");
@@ -13,15 +14,12 @@ const methods = [
   { id: "punto-fijo", index: "04", family: "Métodos abiertos", title: "Punto fijo", description: "Itera una función g(x) hasta alcanzar un valor estable." },
   { id: "newton", index: "05", family: "Métodos abiertos", title: "Newton-Raphson", description: "Usa la pendiente local para acercarse rápidamente a una raíz." },
   { id: "secante", index: "06", family: "Métodos abiertos", title: "Secante", description: "Aproxima la derivada con dos valores iniciales." },
+  { id: "polinomios", index: "07", family: "Raíces de polinomios", title: "Müller y análisis polinomial", description: "Descartes, cota de Lagrange, Müller, Horner, deflación y estabilidad." },
 ];
 
 const methodConfigs = {
   biseccion: {
     solver: bisection, functionLabel: "Función f(x)",
-    presets: [
-      { id: "enlace", label: "Enlace de red (PDF)", expression: "1/(x-8.5)-0.35*ln(x-2)", a: 8.6, b: 10, tolerance: .5, maxIterations: 50 },
-      { id: "polinomio", label: "Polinomio de práctica", expression: "x^3-7*x-5", a: 2, b: 4, tolerance: .01, maxIterations: 50 },
-    ],
     fields: [
       { name: "a", label: "Extremo a", type: "number", step: "any" }, { name: "b", label: "Extremo b", type: "number", step: "any" },
       { name: "tolerance", label: "Tolerancia (%)", type: "number", step: "any", min: "0" }, { name: "maxIterations", label: "Máx. iteraciones", type: "number", step: "1", min: "1", max: "500" },
@@ -30,10 +28,6 @@ const methodConfigs = {
   },
   "falsa-posicion": {
     solver: falsePosition, functionLabel: "Función f(x)",
-    presets: [
-      { id: "nube", label: "Migración a la nube (PDF)", expression: "45+12*x-20*exp(0.4*x)", a: 0, b: 5, tolerance: .5, maxIterations: 50 },
-      { id: "polinomio", label: "Polinomio de práctica", expression: "x^3-7*x-5", a: 2, b: 4, tolerance: .01, maxIterations: 50 },
-    ],
     fields: [
       { name: "a", label: "Extremo a", type: "number", step: "any" }, { name: "b", label: "Extremo b", type: "number", step: "any" },
       { name: "tolerance", label: "Tolerancia (%)", type: "number", step: "any", min: "0" }, { name: "maxIterations", label: "Máx. iteraciones", type: "number", step: "1", min: "1", max: "500" },
@@ -42,10 +36,6 @@ const methodConfigs = {
   },
   "punto-fijo": {
     solver: fixedPoint, functionLabel: "Función de iteración g(x)", help: "El método calcula x siguiente = g(x). Para la gráfica se usa f(x) = g(x) - x.",
-    presets: [
-      { id: "temperatura", label: "Temperatura de servidores (PDF)", expression: "18+8*exp(-0.15*x)", x0: 20, tolerance: .01, maxIterations: 50 },
-      { id: "coseno", label: "Punto fijo clásico", expression: "cos(x)", x0: .5, tolerance: .001, maxIterations: 100 },
-    ],
     fields: [
       { name: "x0", label: "Aproximación inicial x₀", type: "number", step: "any" }, { name: "tolerance", label: "Tolerancia (%)", type: "number", step: "any", min: "0" },
       { name: "maxIterations", label: "Máx. iteraciones", type: "number", step: "1", min: "1", max: "500", full: true },
@@ -54,10 +44,6 @@ const methodConfigs = {
   },
   newton: {
     solver: newton, functionLabel: "Función f(x)", help: "La derivada se estima automáticamente con diferencias centrales.",
-    presets: [
-      { id: "almacenamiento", label: "Sistema de almacenamiento (PDF)", expression: "x^3-7*x-5", x0: 3, tolerance: .01, maxIterations: 50 },
-      { id: "trascendente", label: "Ecuación trascendente", expression: "cos(x)-x", x0: .7, tolerance: .001, maxIterations: 50 },
-    ],
     fields: [
       { name: "x0", label: "Aproximación inicial x₀", type: "number", step: "any" }, { name: "tolerance", label: "Tolerancia (%)", type: "number", step: "any", min: "0" },
       { name: "maxIterations", label: "Máx. iteraciones", type: "number", step: "1", min: "1", max: "500", full: true },
@@ -66,10 +52,6 @@ const methodConfigs = {
   },
   secante: {
     solver: secant, functionLabel: "Función f(x)",
-    presets: [
-      { id: "servidor", label: "Rendimiento del servidor (PDF)", expression: "exp(-x)-x^2+0.2", x0: .5, x1: 1, tolerance: .01, maxIterations: 50 },
-      { id: "polinomio", label: "Polinomio de práctica", expression: "x^3-7*x-5", x0: 2, x1: 4, tolerance: .01, maxIterations: 50 },
-    ],
     fields: [
       { name: "x0", label: "Primer valor x₀", type: "number", step: "any" }, { name: "x1", label: "Segundo valor x₁", type: "number", step: "any" },
       { name: "tolerance", label: "Tolerancia (%)", type: "number", step: "any", min: "0" }, { name: "maxIterations", label: "Máx. iteraciones", type: "number", step: "1", min: "1", max: "500" },
@@ -90,26 +72,26 @@ const errorTools = [
 ];
 
 const errorDefaults = {
-  basic: [{ name: "trueValue", label: "Valor verdadero", value: 25, type: "number", step: "any" }, { name: "approxValue", label: "Valor medido", value: 24.7, type: "number", step: "any" }],
+  basic: [{ name: "trueValue", label: "Valor verdadero", type: "number", step: "any" }, { name: "approxValue", label: "Valor medido", type: "number", step: "any" }],
   compare: [
-    { name: "true1", label: "Valor real 1", value: 300000, type: "number", step: "any" }, { name: "approx1", label: "Medición 1", value: 299800, type: "number", step: "any" },
-    { name: "true2", label: "Valor real 2", value: 2, type: "number", step: "any" }, { name: "approx2", label: "Medición 2", value: 1.95, type: "number", step: "any" },
+    { name: "true1", label: "Valor real 1", type: "number", step: "any" }, { name: "approx1", label: "Medición 1", type: "number", step: "any" },
+    { name: "true2", label: "Valor real 2", type: "number", step: "any" }, { name: "approx2", label: "Medición 2", type: "number", step: "any" },
   ],
   iterative: [
-    { name: "previous", label: "Aproximación anterior x₀", value: 2.718, type: "number", step: "any" }, { name: "current", label: "Aproximación actual x₁", value: 2.7183, type: "number", step: "any" },
-    { name: "digits", label: "Cifras significativas objetivo", value: 4, type: "number", step: "1", min: "1", max: "15", full: true },
+    { name: "previous", label: "Aproximación anterior x₀", type: "number", step: "any" }, { name: "current", label: "Aproximación actual x₁", type: "number", step: "any" },
+    { name: "digits", label: "Cifras significativas objetivo", type: "number", step: "1", min: "1", max: "15", full: true },
   ],
-  scarborough: [{ name: "knownError", label: "Error aproximado εₐ (%)", value: .0008, type: "number", step: "any", min: "0", full: true }],
+  scarborough: [{ name: "knownError", label: "Error aproximado εₐ (%)", type: "number", step: "any", min: "0", full: true }],
   floating: [
-    { name: "base", label: "Base β", value: 10, type: "number", step: "1", min: "2" }, { name: "digits", label: "Cifras de mantisa t", value: 3, type: "number", step: "1", min: "1" },
-    { name: "lower", label: "Exponente mínimo L", value: -4, type: "number", step: "1" }, { name: "upper", label: "Exponente máximo U", value: 4, type: "number", step: "1" },
-    { name: "testValue", label: "Número a clasificar", value: 100000, type: "number", step: "any", full: true, help: "Se usa la forma normalizada 0.d₁d₂…dₜ × βᵉ." },
+    { name: "base", label: "Base β", type: "number", step: "1", min: "2" }, { name: "digits", label: "Cifras de mantisa t", type: "number", step: "1", min: "1" },
+    { name: "lower", label: "Exponente mínimo L", type: "number", step: "1" }, { name: "upper", label: "Exponente máximo U", type: "number", step: "1" },
+    { name: "testValue", label: "Número a clasificar", type: "number", step: "any", full: true, help: "Se usa la forma normalizada 0.d₁d₂…dₜ × βᵉ." },
   ],
-  taylor: [{ name: "x", label: "x en radianes", value: .5, type: "number", step: "any" }, { name: "terms", label: "Número de términos", value: 2, type: "number", step: "1", min: "1", max: "20" }],
-  rounding: [{ name: "value", label: "Número original", value: 7.34567, type: "number", step: "any" }, { name: "digits", label: "Cifras significativas", value: 4, type: "number", step: "1", min: "1", max: "15" }],
+  taylor: [{ name: "x", label: "x en radianes", type: "number", step: "any" }, { name: "terms", label: "Número de términos", type: "number", step: "1", min: "1", max: "20" }],
+  rounding: [{ name: "value", label: "Número original", type: "number", step: "any" }, { name: "digits", label: "Cifras significativas", type: "number", step: "1", min: "1", max: "15" }],
   cancellation: [
-    { name: "a", label: "Primer radicando a", value: 4.0003, type: "number", step: "any" }, { name: "b", label: "Segundo radicando b", value: 4, type: "number", step: "any" },
-    { name: "digits", label: "Cifras de la calculadora", value: 5, type: "number", step: "1", min: "1", max: "15", full: true },
+    { name: "a", label: "Primer radicando a", type: "number", step: "any" }, { name: "b", label: "Segundo radicando b", type: "number", step: "any" },
+    { name: "digits", label: "Cifras de la calculadora", type: "number", step: "1", min: "1", max: "15", full: true },
   ],
 };
 
@@ -136,29 +118,32 @@ function createField(config) {
   return wrap;
 }
 
-function loadPreset(form, preset, config) {
+function loadBlankForm(form, config) {
   form.replaceChildren();
-  form.append(createField({ name: "expression", label: config.functionLabel, value: preset.expression, full: true, help: config.help || "Usa x como variable. Se aceptan ^, sin, cos, exp, ln, sqrt, pi y e." }));
-  config.fields.forEach((item) => form.append(createField({ ...item, value: preset[item.name] })));
+  form.append(createField({ name: "expression", label: config.functionLabel, full: true, help: config.help || "Usa x como variable. Se aceptan ^, sin, cos, exp, ln, sqrt, pi y e." }));
+  config.fields.forEach((item) => form.append(createField(item)));
 }
 
 function renderMethod(methodId) {
   if (methodId === "errores") return renderErrors();
+  if (methodId === "polinomios") return renderPolynomials();
   const method = methods.find((item) => item.id === methodId); const config = methodConfigs[methodId];
   if (!method || !config) return renderHome();
   state.currentMethod = methodId; state.lastResult = null;
   app.replaceChildren(workspaceTemplate.content.cloneNode(true));
   app.querySelector("#crumb-method").textContent = method.title; app.querySelector("#method-family").textContent = method.family; app.querySelector("#method-title").textContent = method.title; app.querySelector("#method-description").textContent = method.description;
-  const select = app.querySelector("#preset-select"); config.presets.forEach((preset, index) => select.add(new Option(preset.label, String(index))));
-  const form = app.querySelector("#method-form"); loadPreset(form, config.presets[0], config);
-  select.addEventListener("change", () => { loadPreset(form, config.presets[Number(select.value)], config); runMethod(methodId); });
+  const form = app.querySelector("#method-form"); loadBlankForm(form, config);
   form.addEventListener("submit", (event) => { event.preventDefault(); runMethod(methodId); });
   app.querySelector("#download-csv").addEventListener("click", downloadCsv);
-  history.replaceState({}, "", `#${methodId}`); runMethod(methodId); app.focus({ preventScroll: true });
+  app.querySelector("#function-chart").innerHTML = svgText(360, 160, "Completa todos los campos y presiona Calcular");
+  app.querySelector("#error-chart").innerHTML = svgText(360, 130, "La convergencia aparecerá después del cálculo");
+  history.replaceState({}, "", `#${methodId}`); app.focus({ preventScroll: true });
 }
 
 function readMethodParameters(form) {
-  const data = Object.fromEntries(new FormData(form));
+  const entries = [...new FormData(form)];
+  if (entries.some(([, value]) => String(value).trim() === "")) throw new Error("Completa todos los campos antes de calcular.");
+  const data = Object.fromEntries(entries);
   Object.keys(data).forEach((key) => { if (key !== "expression") data[key] = Number(data[key]); });
   return data;
 }
@@ -178,18 +163,13 @@ function renderNumericalResult(result, config) {
   const status = result.converged ? "Convergió con el criterio indicado." : "Se alcanzó el máximo de iteraciones.";
   app.querySelector("#result-status").textContent = `${status} ${result.rows.length} iteraciones.`;
   app.querySelector("#metric-row").innerHTML = `<div class="metric"><span>Raíz aproximada</span><strong>${format(result.root)}</strong></div><div class="metric"><span>f(raíz)</span><strong>${format(result.residual, 6)}</strong></div><div class="metric"><span>Error aproximado</span><strong>${result.lastError === null ? "—" : `${format(result.lastError, 6)} %`}</strong></div>`;
-  const presetId = methodConfigs[result.method].presets[Number(app.querySelector("#preset-select").value)]?.id;
-  app.querySelector("#interpretation").textContent = interpretResult(result, presetId);
+  app.querySelector("#interpretation").textContent = interpretResult(result);
   renderTable(config.columns, result.rows); drawFunctionChart(result); drawErrorChart(result.rows); app.querySelector("#download-csv").disabled = false;
 }
 
-function interpretResult(result, presetId) {
+function interpretResult(result) {
   const root = format(result.root, 8);
-  if (presetId === "enlace") return `Interpretación: el modelo alcanza T(C)=0 cerca de C = ${root} Mbps. En una contratación real conviene redondear la capacidad hacia arriba.`;
-  if (presetId === "nube") return `Interpretación: los costos del sistema local y de la nube se igualan aproximadamente a los ${root} años; antes y después de ese punto debe compararse qué alternativa queda por debajo.`;
-  if (presetId === "temperatura") return `Interpretación: la temperatura de equilibrio estimada es ${root} °C. Factor local |g′(x)| ≈ ${format(result.convergenceFactor, 5)} (${result.convergenceFactor < 1 ? "compatible con convergencia" : "puede divergir"}).`;
-  if (presetId === "almacenamiento") return `Interpretación: la raíz positiva ${root} representa el tiempo de respuesta del modelo, expresado en milisegundos.`;
-  if (presetId === "servidor") return `Interpretación: x ≈ ${root} es el nivel de carga normalizado que satisface el punto de operación del servidor.`;
+  if (result.method === "punto-fijo") return `La raíz aproximada es ${root}. El factor local |g′(x)| ≈ ${format(result.convergenceFactor, 5)} ${result.convergenceFactor < 1 ? "es compatible con convergencia" : "advierte una posible divergencia"}.`;
   return `La raíz aproximada ${root} hace que el residuo f(x) sea ${format(result.residual, 6)}.`;
 }
 
@@ -237,8 +217,8 @@ function getIterationPoints(result) {
   return result.rows.map((row) => row.next);
 }
 
-function drawErrorChart(rows) {
-  const svg = app.querySelector("#error-chart"); const width = 720, height = 260, pad = 44;
+function drawErrorChart(rows, selector = "#error-chart") {
+  const svg = app.querySelector(selector); const width = 720, height = 260, pad = 44;
   const points = rows.filter((row) => row.error !== null && row.error > 0 && Number.isFinite(row.error)).map((row) => ({ x: row.i, y: Math.log10(row.error) }));
   if (!points.length) { svg.innerHTML = svgText(width / 2, height / 2, "No hay suficientes iteraciones para graficar el error"); return; }
   const minX = 1, maxX = Math.max(2, ...points.map((p) => p.x)); let minY = Math.min(...points.map((p) => p.y)), maxY = Math.max(...points.map((p) => p.y));
@@ -269,14 +249,19 @@ function renderErrorTool(toolId) {
   app.querySelectorAll("[data-error-tool]").forEach((button) => button.classList.toggle("active", button.dataset.errorTool === toolId));
   app.querySelector("#error-tool-title").textContent = tool.label; app.querySelector("#error-tool-description").textContent = tool.description;
   const form = app.querySelector("#error-form"); form.replaceChildren(); errorDefaults[toolId].forEach((item) => form.append(createField(item)));
-  form.onsubmit = (event) => { event.preventDefault(); calculateErrorTool(toolId, new FormData(form)); }; calculateErrorTool(toolId, new FormData(form));
+  form.onsubmit = (event) => { event.preventDefault(); calculateErrorTool(toolId, new FormData(form)); };
+  app.querySelector("#error-message").textContent = "";
+  app.querySelector("#error-result").innerHTML = `<div class="empty-result">Completa todos los campos para ver el resultado.</div>`;
 }
 
 function metric(label, value) { return `<div class="metric"><span>${label}</span><strong>${value}</strong></div>`; }
 
 function calculateErrorTool(toolId, formData) {
-  const data = Object.fromEntries([...formData].map(([key, value]) => [key, Number(value)])); const output = app.querySelector("#error-result"); const message = app.querySelector("#error-message"); message.textContent = "";
+  const entries = [...formData];
+  const output = app.querySelector("#error-result"); const message = app.querySelector("#error-message"); message.textContent = "";
   try {
+    if (entries.some(([, value]) => String(value).trim() === "")) throw new Error("Completa todos los campos antes de calcular.");
+    const data = Object.fromEntries(entries.map(([key, value]) => [key, Number(value)]));
     let metrics = "", explanation = "", table = "";
     if (toolId === "basic") {
       const absolute = Math.abs(data.trueValue - data.approxValue); const relative = data.trueValue === 0 ? null : absolute / Math.abs(data.trueValue) * 100;
@@ -317,6 +302,74 @@ function calculateErrorTool(toolId, formData) {
     }
     output.innerHTML = `<div class="metric-row error-metrics">${metrics}</div>${table}<div class="explanation">${explanation}</div>`; state.lastResult = { tool: toolId, summary: explanation };
   } catch (error) { message.textContent = error.message; output.innerHTML = `<div class="empty-result">Corrige los datos para ver el resultado.</div>`; }
+}
+
+function renderPolynomials() {
+  state.currentMethod = "polinomios"; state.lastResult = null;
+  app.innerHTML = `<section class="workspace-shell polynomial-shell">
+    <nav class="crumbs"><button type="button" class="text-button" data-action="home">← Todos los métodos</button><span>/</span><strong>Raíces de polinomios</strong></nav>
+    <div class="workspace-heading"><div><p class="eyebrow">Sesión 4</p><h1>Müller y análisis polinomial</h1><p>Completa todos los datos para aplicar Descartes, Lagrange, Horner, Müller, deflación y el criterio de estabilidad.</p></div></div>
+    <div class="polynomial-input-grid">
+      <section class="panel controls-panel"><div class="panel-heading"><span class="step-number">1</span><div><h2>Datos del polinomio</h2><p>No hay valores precargados.</p></div></div><form id="polynomial-form" class="field-grid"></form><div class="form-message" id="polynomial-message" role="alert"></div><button type="submit" form="polynomial-form" class="primary-button">Analizar y calcular raíces</button></section>
+      <section class="panel polynomial-summary"><div class="panel-heading"><span class="step-number">2</span><div><h2>Análisis teórico</h2><p>Descartes, cota global y estabilidad.</p></div></div><div id="polynomial-theory" class="empty-result">Completa todos los campos para ver el análisis.</div></section>
+    </div>
+    <section class="panel polynomial-roots"><div class="panel-heading"><span class="step-number">3</span><div><h2>Raíces y deflación</h2><p>Horner verifica el residuo y la deflación de cada raíz.</p></div></div><div id="polynomial-roots" class="empty-result">Las raíces aparecerán después del cálculo.</div></section>
+    <div class="polynomial-charts">
+      <section class="panel chart-panel"><div class="panel-heading"><span class="step-number">4</span><div><h2>Plano complejo</h2><p>El círculo unitario permite evaluar la estabilidad.</p></div></div><div class="chart-card"><svg id="complex-chart" viewBox="0 0 620 420" role="img" aria-label="Raíces en el plano complejo"></svg></div></section>
+      <section class="panel chart-panel"><div class="panel-heading"><span class="step-number">5</span><div><h2>Convergencia de Müller</h2><p>Error relativo estimado por iteración.</p></div></div><div class="chart-card"><svg id="poly-error-chart" viewBox="0 0 720 260" role="img" aria-label="Convergencia de Müller"></svg></div></section>
+    </div>
+    <section class="panel table-panel"><div class="panel-heading"><span class="step-number">6</span><div><h2>Iteraciones de Müller</h2><p>Primera raíz calculada con los tres puntos ingresados.</p></div></div><div class="table-wrap"><table id="muller-table"></table></div></section>
+  </section>`;
+  const form = app.querySelector("#polynomial-form");
+  [
+    { name: "coefficients", label: "Coeficientes", full: true, help: "Escríbelos de mayor a menor grado, separados por comas. Ejemplo de formato: aₙ, aₙ₋₁, …, a₀" },
+    { name: "z0", label: "Punto inicial z₀", type: "number", step: "any" },
+    { name: "z1", label: "Punto inicial z₁", type: "number", step: "any" },
+    { name: "z2", label: "Punto inicial z₂", type: "number", step: "any" },
+    { name: "tolerance", label: "Tolerancia ε", type: "number", step: "any", min: "0" },
+    { name: "maxIterations", label: "Máx. iteraciones", type: "number", step: "1", min: "1", max: "1000", full: true },
+  ].forEach((field) => form.append(createField(field)));
+  app.querySelector("#complex-chart").innerHTML = svgText(310, 210, "Completa los datos para ubicar las raíces");
+  app.querySelector("#poly-error-chart").innerHTML = svgText(360, 130, "La convergencia aparecerá después del cálculo");
+  form.addEventListener("submit", (event) => { event.preventDefault(); calculatePolynomial(new FormData(form)); });
+  history.replaceState({}, "", "#polinomios"); app.focus({ preventScroll: true });
+}
+
+function calculatePolynomial(formData) {
+  const entries = [...formData]; const message = app.querySelector("#polynomial-message"); message.textContent = "";
+  try {
+    if (entries.some(([, value]) => String(value).trim() === "")) throw new Error("Completa todos los campos antes de calcular.");
+    const input = Object.fromEntries(entries.map(([key, value]) => [key, key === "coefficients" ? value : Number(value)]));
+    const result = analyzePolynomial(input); state.lastResult = result; renderPolynomialResult(result); return result;
+  } catch (error) {
+    state.lastResult = null; message.textContent = error.message;
+    app.querySelector("#polynomial-theory").className = "empty-result"; app.querySelector("#polynomial-theory").textContent = "Corrige los datos para ver el análisis.";
+    return null;
+  }
+}
+
+function formatComplex(value, digits = 8) {
+  const real = Math.abs(value.re) < 1e-12 ? 0 : value.re; const imaginary = Math.abs(value.im) < 1e-12 ? 0 : value.im;
+  if (imaginary === 0) return format(real, digits);
+  if (real === 0) return `${format(imaginary, digits)}i`;
+  return `${format(real, digits)} ${imaginary >= 0 ? "+" : "-"} ${format(Math.abs(imaginary), digits)}i`;
+}
+
+function renderPolynomialResult(result) {
+  const theory = app.querySelector("#polynomial-theory"); theory.className = "polynomial-theory-grid";
+  theory.innerHTML = `${metric("Grado", result.degree)}${metric("Raíces positivas posibles", result.descartes.positiveCounts.join(" o "))}${metric("Raíces negativas posibles", result.descartes.negativeCounts.join(" o "))}${metric("Cota global |z| ≤", format(result.bound))}<div class="stability-card ${result.stable ? "stable" : "unstable"}"><span>Conclusión del filtro</span><strong>${result.stable ? "ESTABLE" : "INESTABLE"}</strong><p>${result.stable ? "Todas las raíces están dentro del círculo unitario." : "Al menos una raíz tiene módulo mayor o igual que 1."}</p></div>`;
+  const roots = app.querySelector("#polynomial-roots"); roots.className = "table-wrap";
+  roots.innerHTML = `<table><thead><tr><th>Raíz</th><th>Valor z</th><th>|z|</th><th>|D(z)| por Horner</th><th>Resto de deflación</th><th>|z| &lt; 1</th></tr></thead><tbody>${result.roots.map((item, index) => `<tr><td>z${index+1}</td><td>${formatComplex(item.root)}</td><td>${format(item.modulus)}</td><td>${format(item.residual, 5)}</td><td>${format(item.remainder, 5)}</td><td><span class="root-status ${item.stable ? "yes" : "no"}">${item.stable ? "Sí" : "No"}</span></td></tr>`).join("")}</tbody></table>`;
+  app.querySelector("#muller-table").innerHTML = `<thead><tr><th>i</th><th>z₀</th><th>z₁</th><th>z₂</th><th>z nuevo</th><th>Error relativo</th><th>|D(z)|</th></tr></thead><tbody>${result.first.rows.map((row) => `<tr><td>${row.i}</td><td>${formatComplex(row.z0)}</td><td>${formatComplex(row.z1)}</td><td>${formatComplex(row.z2)}</td><td>${formatComplex(row.next)}</td><td>${format(row.error, 6)}</td><td>${format(row.residual, 6)}</td></tr>`).join("")}</tbody>`;
+  drawComplexPlane(result.roots); drawErrorChart(result.first.rows, "#poly-error-chart");
+}
+
+function drawComplexPlane(roots) {
+  const svg = app.querySelector("#complex-chart"); const width = 620, height = 420, pad = 46;
+  const extent = Math.max(1.2, ...roots.map((item) => item.modulus*1.2)); const size = Math.min(width-2*pad, height-2*pad);
+  const centerX = width/2, centerY = height/2; const scaleValue = size/(2*extent); const sx = (value) => centerX+value*scaleValue; const sy = (value) => centerY-value*scaleValue;
+  const ticks = [-extent, -extent/2, 0, extent/2, extent];
+  svg.innerHTML = `${ticks.map((value) => `<line class="chart-grid" x1="${sx(value)}" y1="${pad}" x2="${sx(value)}" y2="${height-pad}"/><line class="chart-grid" x1="${pad}" y1="${sy(value)}" x2="${width-pad}" y2="${sy(value)}"/>`).join("")}<line class="chart-axis" x1="${pad}" y1="${centerY}" x2="${width-pad}" y2="${centerY}"/><line class="chart-axis" x1="${centerX}" y1="${pad}" x2="${centerX}" y2="${height-pad}"/><circle class="unit-circle" cx="${centerX}" cy="${centerY}" r="${scaleValue}"/>${roots.map((item,index) => `<circle class="complex-root ${item.stable ? "inside" : "outside"}" cx="${sx(item.root.re)}" cy="${sy(item.root.im)}" r="6"/>${svgText(sx(item.root.re)+10, sy(item.root.im)-10, `z${index+1}`, "start")}`).join("")}${svgText(width-pad,centerY-8,"Re","end")}${svgText(centerX+8,pad+10,"Im","start")}`;
 }
 
 function registerWebMcp() {
