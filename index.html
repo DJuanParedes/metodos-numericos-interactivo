@@ -26,6 +26,7 @@
             <h1>Del planteamiento a la interpretación.</h1>
             <p>Selecciona el procedimiento que aprendiste en clase. Los campos empiezan vacíos y cualquier valor estimado por el programa queda explicado en el resultado.</p>
             <div class="course-stats"><span>4 sesiones</span><span>8 módulos</span><span>Tablas y gráficas</span></div>
+            <div class="journey-strip" id="journey-strip" aria-label="Flujo de trabajo"></div>
           </div>
           <div class="equation-orbit" aria-hidden="true"><span>f(x)=0</span><span>εₐ</span><span>∑</span><span>g′(x)</span><strong>xᵣ</strong></div>
         </div>
@@ -36,33 +37,33 @@
     <template id="workspace-template">
       <section class="workspace-shell">
         <nav class="crumbs" aria-label="Navegación">
-          <button type="button" class="text-button" data-action="home">← Todos los métodos</button>
+          <button type="button" class="text-button" data-action="home"><span class="back-icon" id="back-icon"></span><span>Todos los métodos</span></button>
           <span>/</span><strong id="crumb-method"></strong>
         </nav>
         <div class="workspace-heading">
-          <div><p class="eyebrow" id="method-family"></p><h1 id="method-title"></h1><p id="method-description"></p></div>
+          <div class="method-title-row"><span class="method-hero-icon" id="method-hero-icon"></span><div><p class="eyebrow" id="method-family"></p><h1 id="method-title"></h1><p id="method-description"></p></div></div>
           <aside class="formula-card" id="method-theory"></aside>
         </div>
         <div class="workspace-grid">
           <section class="panel controls-panel" aria-labelledby="parameters-title">
-            <div class="panel-heading"><span class="step-number">1</span><div><h2 id="parameters-title">Configura</h2><p>Edita los datos antes de calcular.</p></div></div>
+            <div class="panel-heading"><span class="step-number" data-step="1"></span><div><h2 id="parameters-title">Configura</h2><p>Edita los datos antes de calcular.</p></div></div>
             <form id="method-form" class="field-grid"></form>
             <div class="form-message" id="form-message" role="alert" aria-live="polite"></div>
-            <button type="submit" form="method-form" class="primary-button">Calcular</button>
+            <button type="submit" form="method-form" class="primary-button" id="calculate-button"></button>
           </section>
           <section class="panel results-panel" aria-labelledby="results-title">
-            <div class="panel-heading"><span class="step-number">2</span><div><h2 id="results-title">Resultado</h2><p id="result-status">Completa los datos para comenzar.</p></div></div>
+            <div class="panel-heading"><span class="step-number" data-step="2"></span><div><h2 id="results-title">Resultado</h2><p id="result-status">Completa los datos para comenzar.</p></div></div>
             <div class="metric-row" id="metric-row"></div>
             <div class="initialization-note" id="initialization-note"></div>
             <div class="interpretation" id="interpretation"></div>
             <div class="charts-grid">
-              <div class="chart-card"><div class="chart-heading"><h3>Función e iteraciones</h3><span id="chart-range"></span></div><svg id="function-chart" viewBox="0 0 720 320" role="img" aria-label="Gráfica de la función"></svg></div>
-              <div class="chart-card"><div class="chart-heading"><h3>Convergencia</h3><span id="error-chart-label">Criterio seleccionado</span></div><svg id="error-chart" viewBox="0 0 720 260" role="img" aria-label="Gráfica del error por iteración"></svg></div>
+              <div class="chart-card"><div class="chart-heading"><h3><i id="function-chart-icon"></i>Función e iteraciones</h3><span id="chart-range"></span></div><svg id="function-chart" viewBox="0 0 720 320" role="img" aria-label="Gráfica de la función"></svg></div>
+              <div class="chart-card"><div class="chart-heading"><h3><i id="error-chart-icon"></i>Convergencia</h3><span id="error-chart-label">Criterio seleccionado</span></div><svg id="error-chart" viewBox="0 0 720 260" role="img" aria-label="Gráfica del error por iteración"></svg></div>
             </div>
           </section>
         </div>
         <section class="panel table-panel">
-          <div class="panel-heading table-heading"><span class="step-number">3</span><div><h2>Iteraciones</h2><p>Revisa cómo avanza el método.</p></div><button type="button" class="secondary-button" id="download-csv" disabled>Descargar CSV</button></div>
+          <div class="panel-heading table-heading"><span class="step-number" data-step="3"></span><div><h2>Iteraciones</h2><p>Revisa cómo avanza el método.</p></div><button type="button" class="secondary-button" id="download-csv" disabled></button></div>
           <div class="table-wrap"><table id="iterations-table"></table></div>
         </section>
       </section>
