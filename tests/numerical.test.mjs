@@ -39,6 +39,11 @@ close(modified.root, 1, 1e-6, "Falsa posición modificada");
 const polynomial = analyzePolynomial({ coefficients: "8,-6,-3,3,-1", z0: 0, z1: .5, z2: 1, initialMode: "manual", tolerance: 1e-5, maxIterations: 100 });
 assert.equal(polynomial.degree, 4);
 assert.equal(polynomial.roots.length, 4);
+assert.equal(polynomial.descartes.positiveVariations, 3);
+assert.equal(polynomial.descartes.negativeVariations, 1);
+assert.equal(polynomial.bounds.cauchy, 1.75);
+assert.equal(polynomial.stages.length, 4);
+assert.ok(polynomial.stages.every((stage) => Array.isArray(stage.quotient)));
 assert.ok(polynomial.roots.every((root) => root.residual < 1e-4));
 assert.ok(polynomial.roots.every((root) => root.remainder < 1e-3));
 
