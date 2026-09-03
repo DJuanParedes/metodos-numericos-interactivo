@@ -63,6 +63,27 @@ export function lagrangeBound(coefficients) {
   return 1 + Math.max(...coefficients.slice(1).map((value) => Math.abs(value)/leading));
 }
 
+function positiveLagrangeBound(coefficients) {
+  const normalized = coefficients[0] < 0 ? coefficients.map((value) => -value) : coefficients;
+  const firstNegative = normalized.findIndex((value, index) => index > 0 && value < 0);
+  if (firstNegative < 0) return null;
+  const largestNegative = Math.max(...normalized.filter((value, index) => index > 0 && value < 0).map((value) => Math.abs(value)));
+  return 1 + (largestNegative/normalized[0])**(1/firstNegative);
+}
+
+export function lagrangeBounds(coefficients) {
+  const positiveUpper = positiveLagrangeBound(coefficients);
+  const transformed = coefficients.map((value, index) => value*((coefficients.length-1-index)%2 ? -1 : 1));
+  const negativeMagnitude = positiveLagrangeBound(transformed);
+  const cauchy = lagrangeBound(coefficients);
+  return {
+    positiveUpper,
+    negativeLower: negativeMagnitude === null ? null : -negativeMagnitude,
+    cauchy,
+    global: Math.max(cauchy, positiveUpper ?? 0, negativeMagnitude ?? 0),
+  };
+}
+
 export function deflate(coefficients, root) {
   const values = coefficients.map(asComplex);
   if (values.length < 2) throw new Error("No se puede deflactar un polinomio constante.");
@@ -73,7 +94,7 @@ export function deflate(coefficients, root) {
 }
 
 export function muller(coefficients, z0, z1, z2, tolerance, maxIterations) {
-  let x0 = C(z0), x1 = C(z1), x2 = C(z2);
+  let x0 = asComplex(z0), x1 = asComplex(z1), x2 = asComplex(z2);
   const rows = [];
   for (let iteration = 1; iteration <= maxIterations; iteration += 1) {
     const f0 = evaluatePolynomial(coefficients, x0);
@@ -97,6 +118,14 @@ export function muller(coefficients, z0, z1, z2, tolerance, maxIterations) {
     if (error <= tolerance || residual <= tolerance) break;
   }
   return { root: cleanComplex(x2, tolerance), rows, converged: rows.at(-1)?.error <= tolerance || rows.at(-1)?.residual <= tolerance };
+}
+
+function automaticSeeds(coefficients, firstStage = false) {
+  const values = coefficients.map(asComplex);
+  const leading = abs(values[0]);
+  const radius = 1 + Math.max(...values.slice(1).map((value) => abs(value)/leading));
+  if (firstStage && values.every((value) => Math.abs(value.im) < 1e-14)) return [C(-radius), C(0), C(radius)];
+  return [C(radius), C(-radius/2, radius*Math.sqrt(3)/2), C(-radius/2, -radius*Math.sqrt(3)/2)];
 }
 
 function durandKerner(coefficients, tolerance) {
@@ -149,32 +178,80 @@ function cleanComplex(value, tolerance = 1e-12) {
   return C(Math.abs(value.re) < threshold ? 0 : value.re, Math.abs(value.im) < threshold ? 0 : value.im);
 }
 
-export function analyzePolynomial({ coefficients, z0, z1, z2, tolerance, maxIterations }) {
+export function analyzePolynomial({ coefficients, z0, z1, z2, initialMode, tolerance, maxIterations }) {
   const realCoefficients = parseCoefficients(coefficients);
-  if (![z0,z1,z2,tolerance,maxIterations].every(Number.isFinite)) throw new Error("Completa todos los valores numéricos.");
-  if (new Set([z0,z1,z2]).size < 3) throw new Error("Los tres puntos iniciales deben ser distintos.");
+  if (!new Set(["manual", "lagrange"]).has(initialMode)) throw new Error("Selecciona cómo se obtendrán los puntos iniciales.");
+  if (![tolerance,maxIterations].every(Number.isFinite)) throw new Error("Completa la tolerancia y el máximo de iteraciones.");
+  if (initialMode === "manual" && ![z0,z1,z2].every(Number.isFinite)) throw new Error("En modo manual debes ingresar z₀, z₁ y z₂.");
+  if (initialMode === "manual" && new Set([z0,z1,z2]).size < 3) throw new Error("Los tres puntos iniciales deben ser distintos.");
   if (tolerance <= 0) throw new Error("La tolerancia debe ser mayor que cero.");
   if (!Number.isInteger(maxIterations) || maxIterations < 1 || maxIterations > 1000) throw new Error("Usa entre 1 y 1000 iteraciones.");
   const complexCoefficients = realCoefficients.map((value) => C(value));
-  const first = muller(complexCoefficients, z0, z1, z2, tolerance, maxIterations);
-  const firstDeflation = deflate(complexCoefficients, first.root);
-  const remaining = durandKerner(firstDeflation.quotient, tolerance);
-  const roots = [first.root, ...remaining].map((root) => polishRoot(complexCoefficients, root, tolerance));
+  const bounds = lagrangeBounds(realCoefficients);
   let current = complexCoefficients;
-  const rootDetails = roots.map((root) => {
-    const residual = abs(evaluatePolynomial(complexCoefficients, root));
+  const stages = [];
+  const stageRoots = [];
+  while (current.length > 1) {
+    const stageNumber = stages.length + 1;
+    if (current.length === 2) {
+      const root = div(scale(current[1], -1), current[0]);
+      const step = deflate(current, root);
+      stages.push({ stage: stageNumber, root, rows: [], remainder: abs(step.remainder), method: "solución lineal", seeds: [] });
+      stageRoots.push(root);
+      current = step.quotient;
+      continue;
+    }
+    const seeds = stageNumber === 1 && initialMode === "manual"
+      ? [C(z0), C(z1), C(z2)]
+      : automaticSeeds(current, stageNumber === 1);
+    let calculation;
+    try {
+      calculation = muller(current, seeds[0], seeds[1], seeds[2], tolerance, maxIterations);
+      if (!calculation.converged) throw new Error("Müller no alcanzó la tolerancia.");
+    } catch {
+      const fallbackRoot = durandKerner(current, tolerance)[0];
+      calculation = { root: fallbackRoot, rows: [], converged: true, fallback: true };
+    }
+    const root = polishRoot(current, calculation.root, tolerance);
     const step = deflate(current, root);
+    stages.push({
+      stage: stageNumber,
+      root,
+      rows: calculation.rows,
+      remainder: abs(step.remainder),
+      method: calculation.fallback ? "respaldo numérico" : "Müller",
+      seeds,
+    });
+    stageRoots.push(root);
     current = step.quotient;
-    return { root, modulus: abs(root), residual, remainder: abs(step.remainder), stable: abs(root) < 1 };
-  });
+  }
+  const roots = stageRoots.map((root) => polishRoot(complexCoefficients, root, tolerance));
+  const rootDetails = roots.map((root, index) => ({
+    root,
+    modulus: abs(root),
+    residual: abs(evaluatePolynomial(complexCoefficients, root)),
+    remainder: stages[index].remainder,
+    stable: abs(root) < 1,
+    method: stages[index].method,
+  }));
+  const firstSeeds = stages[0]?.seeds ?? [];
   return {
     coefficients: realCoefficients,
     degree: realCoefficients.length-1,
     descartes: descartesAnalysis(realCoefficients),
-    bound: lagrangeBound(realCoefficients),
-    first,
+    bound: bounds.global,
+    bounds,
+    first: { rows: stages[0]?.rows ?? [], root: roots[0], converged: true },
+    stages,
     roots: rootDetails,
     stable: rootDetails.every((item) => item.stable),
+    initialization: {
+      mode: initialMode,
+      seeds: firstSeeds,
+      message: initialMode === "manual"
+        ? "La primera raíz usó los tres puntos ingresados; las deflaciones siguientes generaron puntos a partir de la cota del polinomio reducido."
+        : `Los puntos iniciales se generaron automáticamente dentro de la cota global |z| ≤ ${bounds.global}.`,
+    },
   };
 }
 
